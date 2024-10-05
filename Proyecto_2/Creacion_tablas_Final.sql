@@ -55,14 +55,15 @@ CREATE TABLE Pedido (
     fecha_pedido DATE,
     total_pedido FLOAT,
     cliente_id INT REFERENCES Cliente(cliente_id),
-    sucursal_id INT REFERENCES Sucursal(sucursal_id)
+    sucursal_id INT REFERENCES Sucursal(sucursal_id),
+	mesa_id int REFERENCES Mesa(mesa_id)
 );
 
 CREATE TABLE Plato (
     plato_id SERIAL PRIMARY KEY,
     nombre VARCHAR(50),
     precio FLOAT CHECK (precio >= 0),
-    descripcion VARCHAR(50)
+    descripcion VARCHAR(255)
 );
 
 CREATE TABLE Pedido_Plato (
@@ -85,4 +86,6 @@ CREATE TABLE Insumo_Plato (
     plato_id INT REFERENCES Plato(plato_id),
     PRIMARY KEY (insumo_id, plato_id)
 );
+
+
 
