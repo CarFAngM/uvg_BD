@@ -161,15 +161,15 @@ def gestionar_reservas():
             
         elif x2 == '2': 
             try:
-                id_reserva = int(input('Ingrese el ID de la reserva: '))   
+                reserva_id = int(input('Ingrese el ID de la reserva: '))   
                 sucursal_id = int(input('Ingrese su sucursal: '))
                 
                 update_reserva_query = """
                     UPDATE reserva
                     SET estado_reserva = 'FINALIZADA'
-                    WHERE id_reserva = %s AND sucursal_id = %s;
+                    WHERE reserva_id = %s AND sucursal_id = %s;
                 """
-                cur.execute(update_reserva_query, (id_reserva, sucursal_id))
+                cur.execute(update_reserva_query, (reserva_id, sucursal_id))
                 conn.commit()
                 print("Reserva finalizada correctamente.")
 
@@ -184,9 +184,30 @@ def gestionar_reservas():
         else: 
             print('Ingrese números del 1 al 3.')
 
-
 def gestionar_mesas():
-    print("Funcionalidad de gestionar mesas aún no implementada.")
+    try: 
+        sucursal_id = int(input('Ingrese el ID de la sucursal: '))
+        mesa_id = int(input('Ingrese el ID de la mesa: '))
+        
+        update_mesa_query = """
+            UPDATE mesa
+            SET disponibilidad = TRUE
+            WHERE sucursal_id = %s AND mesa_id = %s;
+        """
+        cur.execute(update_mesa_query, (sucursal_id, mesa_id))
+        
+        if cur.rowcount > 0:
+            conn.commit()
+            print("Mesa marcada como disponible correctamente.")
+        else:
+            print("No se encontró la mesa o la sucursal especificada.")
+
+    except ValueError:
+        print("Por favor, ingrese un número válido para el ID de la sucursal y la mesa.")
+
+    except psycopg2.Error as e: 
+        print(f"Error al actualizar la mesa: {e}")
+        conn.rollback()  
 
 def visualizar_clientes():
     nombre = input('Ingrese el nombre del cliente: ')
@@ -210,6 +231,7 @@ def visualizar_clientes():
 
 def reporteria():
     print("Funcionalidad de reportería aún no implementada.")
+
 
 def customer_history():
     print("Funcionalidad de historial de cliente aún no implementada.")
@@ -241,7 +263,7 @@ def desplegar_menu_por_rol(rol):
             elif y == '5': 
                 visualizar_clientes()
 
-            elif y == '6': 
+            elif y == '6':
                 continuar3 = False
 
             else:
@@ -250,6 +272,8 @@ def desplegar_menu_por_rol(rol):
     elif rol == 'Administrador':
         print("Menú de Administrador aún no implementado.")
 
-
     elif rol == 'Gerente':
-        print("Menú de Gerente aún no implementado.")
+        print("Menú de Gerente aún no implementado")
+
+
+
