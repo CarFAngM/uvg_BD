@@ -222,7 +222,7 @@ def desplegar_menu_por_rol(rol):
             print('2. Agregar pedido')
             print('3. Gestionar reserva')
             print('4. Gestionar mesas')
-            print('5. Visualizar clientes de la sucursal')
+            print('5. Visualizar clientes')
             print('6. Salir')
             y = input('Ingrese qué desea realizar hoy: ') 
 
