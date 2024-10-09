@@ -18,6 +18,46 @@ def get_sucursal_para_usuario():
         return current_branch
     else:
         return input('Ingrese el id de la sucursal (Administrador): ')
+    
+def gestion_de_insumos(): 
+    while True: 
+        print('1. Registrar nuevos insumos para la sucursal (junto con cambio en fecha de caducidad)')
+        print('2. Visualizar todos insumos de la sucursal')
+        print('3. Ver insumos cuyo stock esta bajo')
+        print('4. salir')
+
+        d2 = input('ingrese su decision: ')
+
+        if d2 == '1': 
+            pass
+        
+        elif d2 == '2': 
+            sucursal_id = get_sucursal_para_usuario()
+            try: 
+                query_visualizacion_insumos = '''
+                    SELECT * 
+                    FROM insumo 
+                    WHERE sucursal_id = %s;    
+                '''
+                cur.execute(query_visualizacion_insumos,(sucursal_id,))
+                insumos = cur.fetchall()
+
+                for insumo in insumos: 
+                    print(f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, Stock_Bajo: {'Sí' if insumo[4] else 'No'}")
+
+            except psycopg2.Error as e:
+                print(f"Error al visualizar los insumos: {e}")
+                conn.rollback()
+
+        elif d2 == '3': 
+            break
+    
+        elif d2 == '4': 
+            break
+
+        else: 
+            print('Ingrese una decision correcta.')
+         
 
 def agregar_cliente(): 
     nombre = input('Ingrese su nombre: ')
@@ -415,7 +455,13 @@ def desplegar_menu_por_rol(rol):
             elif z == '5': 
                 visualizar_clientes()
 
-            elif z == '6':
+            elif z == '6': 
+                gestion_de_insumos()
+
+            elif z == '7': 
+                visualizar_clientes()
+
+            elif z == '8':
                 continuar5 = False
 
             else:
