@@ -9,6 +9,16 @@ try:
 except psycopg2.Error as e:
     print(f"No se pudo conectar a la base de datos: {e}")
 
+
+current_branch = None
+
+def get_sucursal_para_usuario():
+    global current_branch
+    if current_branch:
+        return current_branch
+    else:
+        return input('Ingrese el id de la sucursal (Administrador): ')
+
 def agregar_cliente(): 
     nombre = input('Ingrese su nombre: ')
     correo = input('Ingrese su correo: ')
@@ -28,41 +38,82 @@ def agregar_cliente():
         print(f"Error al registrar el cliente: {e}")
         conn.rollback()
 
-def agregar_pedido(): 
-    fecha = input('Ingrese la fecha del pedido: ')
+def agregar_pedido():
+    fecha = input('Ingrese la fecha del pedido (YYYY-MM-DD): ')
     cliente_id = input('Ingrese el id del cliente: ')
-    sucursal_id = input('Ingrese el id de la sucursal: ')
-    mesa_id = input('Ingrese la mesa de la sucursal que desea. Si no desea mesa ingrese NULL: ')
-    cantidad = input('Ingrese la cantidad de platos que desea: ')
+    sucursal_id = get_sucursal_para_usuario()  
     total_pedido = input('Ingrese el monto del pedido: ')
 
     try:
-        insert_pedido_query = """
-        INSERT INTO pedido (fecha, total_pedido, cliente_id, sucursal_id, mesa_id) 
-        VALUES (%s, %s, %s, %s, %s);
+
+        query_mesas_disponibles = """
+            SELECT mesa_id 
+            FROM mesa 
+            WHERE disponibilidad = TRUE AND sucursal_id = %s;
         """
-        cur.execute(insert_pedido_query, (fecha, total_pedido, cliente_id, sucursal_id, mesa_id))
+        cur.execute(query_mesas_disponibles, (current_branch,))
+        mesas_disponibles = cur.fetchall()
+
+        if mesas_disponibles:
+            print("Mesas disponibles en la sucursal:")
+            for mesa in mesas_disponibles:
+                print(f"Mesa ID: {mesa[0]}")
+        else:
+            print("No hay mesas disponibles en este momento en la sucursal.")
+            mesa_id = None  
+
+        mesa_id = input('Ingrese la mesa de la sucursal que desea. Si no desea mesa, ingrese NULL: ')
+
+
+        insert_pedido_query = """
+        INSERT INTO pedido (fecha_pedido, total_pedido, cliente_id, sucursal_id, mesa_id) 
+        VALUES (%s, %s, %s, %s, %s) RETURNING pedido_id;
+        """
+        cur.execute(insert_pedido_query, (fecha, total_pedido, cliente_id, current_branch, mesa_id))
+
+        pedido_id = cur.fetchone()[0]
         conn.commit()
-        print("Pedido registrado con éxito.")
+        print("Pedido registrado con éxito. ID del pedido:", pedido_id)
+
+        while True:
+            plato_id = input('Ingrese el ID del plato que desea agregar al pedido (o "0" para finalizar): ')
+            
+            if plato_id == "0":
+                break
+
+            try:
+                insert_pedido_plato_query = """
+                INSERT INTO pedido_plato (pedido_id, plato_id)
+                VALUES (%s, %s);
+                """
+                cur.execute(insert_pedido_plato_query, (pedido_id, plato_id))
+                conn.commit()
+                print(f"Plato con ID {plato_id} agregado al pedido {pedido_id} con éxito.")
+            
+            except psycopg2.Error as e:
+                print(f"Error al agregar el plato {plato_id} al pedido: {e}")
+                conn.rollback()
     
     except psycopg2.Error as e:
         print(f"Error al registrar el pedido: {e}")
         conn.rollback()
 
 def sign_in():
+    global current_branch 
     correo = input("Escriba su correo: ")
     contraseña = input("Escriba su contraseña: ")
 
     try:
-        query = "SELECT rol FROM usuario WHERE correo = %s AND contrasena = %s"
+        query = "SELECT rol, sucursal_id FROM usuario JOIN sucursal_usuario ON usuario.usuario_id = sucursal_usuario.usuario_id WHERE correo = %s AND contrasena = %s"
         cur.execute(query, (correo, contraseña))
         resultado = cur.fetchone()
-        
+
         if resultado is None:
             print("Error: Correo o contraseña incorrectos.")
         else:
-            rol = resultado[0]
-            print(f"Iniciaste sesión correctamente como {rol}.")
+            rol, sucursal_id = resultado  
+            current_branch = sucursal_id  
+            print(f"Iniciaste sesión correctamente como {rol} en la sucursal {current_branch}.")
             desplegar_menu_por_rol(rol)
     
     except psycopg2.Error as e:
@@ -120,14 +171,14 @@ def gestionar_reservas():
         x2 = input('Ingrese su decisión: ')
 
         if x2 == '1':
-            sucursal_id = input('Ingrese el ID de la sucursal: ')
+            sucursal_id = get_sucursal_para_usuario() 
             try:
                 query_mesas_disponibles = """
                     SELECT mesa_id 
                     FROM mesa 
-                    WHERE disponibilidad = TRUE and sucursal_id = %s ;
+                    WHERE disponibilidad = TRUE and sucursal_id = %s;
                 """
-                cur.execute(query_mesas_disponibles, (sucursal_id))
+                cur.execute(query_mesas_disponibles, (sucursal_id,))
                 mesas_disponibles = cur.fetchall()
 
                 if mesas_disponibles:
@@ -162,7 +213,7 @@ def gestionar_reservas():
         elif x2 == '2': 
             try:
                 reserva_id = int(input('Ingrese el ID de la reserva: '))   
-                sucursal_id = int(input('Ingrese su sucursal: '))
+                sucursal_id = get_sucursal_para_usuario()  
                 
                 update_reserva_query = """
                     UPDATE reserva
@@ -184,9 +235,10 @@ def gestionar_reservas():
         else: 
             print('Ingrese números del 1 al 3.')
 
+
 def gestionar_mesas():
     try: 
-        sucursal_id = int(input('Ingrese el ID de la sucursal: '))
+        sucursal_id = get_sucursal_para_usuario()
         mesa_id = int(input('Ingrese el ID de la mesa: '))
         
         update_mesa_query = """
@@ -218,7 +270,6 @@ def visualizar_clientes():
         query1 = "SELECT * FROM cliente WHERE nombre = %s AND correo = %s"
         cur.execute(query1, (nombre, correo))
         
-
         resultado = cur.fetchone()
         
         if resultado:
@@ -270,10 +321,68 @@ def desplegar_menu_por_rol(rol):
                 print('Ingrese una opción correcta.')
 
     elif rol == 'Administrador':
-        print("Menú de Administrador aún no implementado.")
+        continuar5 = True
+        while continuar5: 
+            print('1. Gestion de insumos basados en la sucursal')
+            print('2. Reporteria')
+            print('3. Control de cambios')
+            print('4. Salir')
+            x2 = input('Ingrese qué desea realizar hoy: ') 
+
+            if x2 == '1': 
+                agregar_cliente() 
+
+            elif x2 == '2': 
+                agregar_pedido()
+
+            elif x2 == '3': 
+                gestionar_reservas()
+
+            elif x2 == '4': 
+                gestionar_mesas()
+
+            elif x2 == '5': 
+                visualizar_clientes()
+
+            elif x2 == '6':
+                continuar5 = False
+
+            else:
+                print('Ingrese una opción correcta.')
 
     elif rol == 'Gerente':
-        print("Menú de Gerente aún no implementado")
+        continuar5 = True
+        while continuar5: 
+            print('1. Agregar cliente')
+            print('2. Agregar pedido')
+            print('3. Gestionar reserva')
+            print('4. Gestionar mesas')
+            print('5. Visualizar clientes')
+            print('6. Gestion de insumos de la sucursal a la que pertenece')
+            print('7. Control de cambios de la sucursal')
+            print('8. Salir')
+            z = input('Ingrese qué desea realizar hoy: ') 
+
+            if z == '1': 
+                agregar_cliente() 
+
+            elif z == '2': 
+                agregar_pedido()
+
+            elif z == '3': 
+                gestionar_reservas()
+
+            elif z == '4': 
+                gestionar_mesas()
+
+            elif z == '5': 
+                visualizar_clientes()
+
+            elif z == '6':
+                continuar5 = False
+
+            else:
+                print('Ingrese una opción correcta.')
 
 
 

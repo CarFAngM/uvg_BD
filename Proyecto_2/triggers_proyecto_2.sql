@@ -37,3 +37,4 @@ AFTER UPDATE ON reserva
 FOR EACH ROW
 EXECUTE FUNCTION desbloquear_mesa_por_finalizacion();
 
+
