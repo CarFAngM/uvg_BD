@@ -237,29 +237,66 @@ def gestionar_reservas():
 
 
 def gestionar_mesas():
-    try: 
-        sucursal_id = get_sucursal_para_usuario()
-        mesa_id = int(input('Ingrese el ID de la mesa: '))
-        
-        update_mesa_query = """
-            UPDATE mesa
-            SET disponibilidad = TRUE
-            WHERE sucursal_id = %s AND mesa_id = %s;
-        """
-        cur.execute(update_mesa_query, (sucursal_id, mesa_id))
-        
-        if cur.rowcount > 0:
-            conn.commit()
-            print("Mesa marcada como disponible correctamente.")
-        else:
-            print("No se encontró la mesa o la sucursal especificada.")
 
-    except ValueError:
-        print("Por favor, ingrese un número válido para el ID de la sucursal y la mesa.")
+    while True: 
+        print('1. Ver mesas ocupadas de la sucursal')
+        print('2. Desbloquear mesa')
+        print('3. Salir')
+        d1 = input('Ingrese su decisión: ')
+        
+        if d1 == "1":
+            try: 
+                sucursal_id = get_sucursal_para_usuario() 
+                ver_mesas_query = '''
+                    SELECT mesa_id
+                    FROM mesa
+                    WHERE sucursal_id = %s AND disponibilidad = FALSE;
+                '''
+                cur.execute(ver_mesas_query, (sucursal_id,))
+                mesas_ocupadas = cur.fetchall()
 
-    except psycopg2.Error as e: 
-        print(f"Error al actualizar la mesa: {e}")
-        conn.rollback()  
+                if mesas_ocupadas:
+                    print("Mesas disponibles:")
+                    for mesa in mesas_ocupadas:
+                        print(f"Mesa ID: {mesa[0]}")
+                else:
+                    print("No hay mesas disponibles en este momento.")
+                    continue  
+
+            except psycopg2.Error as e: 
+                print(f"Error al actualizar la mesa: {e}")
+                conn.rollback()
+
+        elif d1 == "2": 
+            try: 
+                sucursal_id = get_sucursal_para_usuario()
+                mesa_id = int(input('Ingrese el ID de la mesa: '))
+                
+                update_mesa_query = """
+                    UPDATE mesa
+                    SET disponibilidad = TRUE
+                    WHERE sucursal_id = %s AND mesa_id = %s;
+                """
+                cur.execute(update_mesa_query, (sucursal_id, mesa_id))
+                
+                if cur.rowcount > 0:
+                    conn.commit()
+                    print("Mesa marcada como disponible correctamente.")
+                else:
+                    print("No se encontró la mesa o la sucursal especificada.")
+
+            except ValueError:
+                print("Por favor, ingrese un número válido para el ID de la sucursal y la mesa.")
+
+            except psycopg2.Error as e: 
+                print(f"Error al actualizar la mesa: {e}")
+                conn.rollback()  
+
+        elif d1 == "3": 
+            break
+        
+        else: 
+            print('Ingrese una decision correcta.')
 
 def visualizar_clientes():
     nombre = input('Ingrese el nombre del cliente: ')

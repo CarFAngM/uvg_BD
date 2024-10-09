@@ -37,4 +37,23 @@ AFTER UPDATE ON reserva
 FOR EACH ROW
 EXECUTE FUNCTION desbloquear_mesa_por_finalizacion();
 
+CREATE OR REPLACE FUNCTION bloquear_mesa_por_pedido()
+RETURNS TRIGGER AS $$
+BEGIN
+
+    UPDATE mesa
+    SET disponibilidad = FALSE
+    WHERE mesa.mesa_id = NEW.mesa_id;
+
+
+    RAISE NOTICE 'La mesa con el id está ocupada: mesa_id = %', NEW.mesa_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER bloquear_mesa_por_pedido
+AFTER INSERT ON pedido
+FOR EACH ROW
+EXECUTE FUNCTION bloquear_mesa_por_pedido();
 
