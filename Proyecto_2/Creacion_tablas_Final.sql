@@ -10,9 +10,12 @@ CREATE TABLE Bitacora (
     bitacora_id SERIAL PRIMARY KEY,
     accion VARCHAR(50),
     fecha_accion DATE,
-    tabla_afectada VARCHAR(50),
-    usuario_id INT REFERENCES Usuario(usuario_id)
+    tabla_afectada VARCHAR(50)
 );
+
+ALTER TABLE Bitacora
+ALTER COLUMN accion SET DATA TYPE varchar(120);
+	
 
 CREATE TABLE Sucursal (
     sucursal_id SERIAL PRIMARY KEY,
@@ -87,4 +90,7 @@ CREATE TABLE Insumo_Plato (
     PRIMARY KEY (insumo_id, plato_id)
 );
 
+ALTER TABLE Insumo
+ADD CONSTRAINT chk_cantidad_disponible 
+CHECK (cantidad_disponible >= 0 AND cantidad_disponible <= 100);
 
