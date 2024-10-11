@@ -20,31 +20,35 @@ EXECUTE FUNCTION bloquear_mesa_por_reserva();
 
 CREATE OR REPLACE FUNCTION desbloquear_mesa_por_finalizacion()
 RETURNS TRIGGER AS $$
-declare
-	accion_personalizada text; 
+DECLARE
+    accion_personalizada TEXT; 
 BEGIN
-    IF NEW.estado_reserva = 'FINALIZADA' THEN
+    -- Verifica si el estado de la reserva cambió a 'FINALIZADA'
+    IF NEW.estado = 'FINALIZADA' THEN
+        -- Actualiza la disponibilidad de la mesa
         UPDATE mesa
         SET disponibilidad = TRUE
         WHERE mesa.mesa_id = NEW.mesa_id;
-        RAISE NOTICE 'La mesa con el id está desbloqueada: mesa_id = %', NEW.mesa_id; 
-
-		accion_personalizada := 'Estado de la mesa:' || NEW.mesa_id ||  'cambió , ANTES: ' || OLD.disponibilidad || '
-		AHORA: ' || NEW.disponibilidad;
-
-		INSERT INTO public.bitacora(accion, fecha_accion, tabla_afectada)
-		VALUES (accion_personalizada, now(), 'mesa'); 
-
+        
+        -- Mensaje para verificar que la mesa fue desbloqueada
+        RAISE NOTICE 'La mesa con el ID % está desbloqueada', NEW.mesa_id; 
+    ELSE
+        RAISE NOTICE 'El estado de la reserva no es FINALIZADA, no se realiza ninguna acción.';
     END IF;
-
+    
     RETURN NEW; 
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- Definición del trigger para que se ejecute después de la actualización
 CREATE TRIGGER desbloquear_mesa_por_finalizacion
 AFTER UPDATE ON reserva
 FOR EACH ROW
-EXECUTE FUNCTION desbloquear_mesa_por_finalizacion();
+EXECUTE FUNCTION desbloquear_mesa_por_finalizacion(); 
+
+
+
 
 CREATE OR REPLACE FUNCTION bloquear_mesa_por_pedido()
 RETURNS TRIGGER AS $$
