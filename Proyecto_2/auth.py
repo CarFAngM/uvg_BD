@@ -4,28 +4,34 @@ from db_connection import get_connection
 
 conn = get_connection()
 cur = conn.cursor() if conn else None
-
 current_branch = None
 
 
-def get_sucursal_para_usuario():
-    global current_branch
-    if current_branch:
-        return current_branch
-    else:
-        return input('Ingrese el id de la sucursal (Administrador): ')
+# Funcion para obtener la sucursal de un usuario segun su correo
+def get_sucursal_para_usuario(correo):
+    try:
+        query = ("SELECT sucursal_id FROM Sucursal_Usuario WHERE usuario_id = "
+                 "(SELECT usuario_id FROM Usuario WHERE correo = %s LIMIT 1)")
+        cur.execute(query, (correo,))
+        resultado = cur.fetchone()
+        if resultado:
+            return resultado[0]
+        else:
+            print(f"No se encontró la sucursal para el usuario con correo: {correo}.")
+            return None
+    except psycopg2.Error as e:
+        print(f"Error al obtener la sucursal para el usuario con correo {correo}: {e}")
+        return None
 
 
-def sign_in():
-    global current_branch
+def log_in():
     correo = input("Escriba su correo: ")
     contrasena = input("Escriba su contraseña: ")
 
     try:
         query = """
-            SELECT rol, sucursal_id
+            SELECT rol
             FROM usuario
-            JOIN sucursal_usuario ON usuario.usuario_id = sucursal_usuario.usuario_id
             WHERE correo = %s AND contrasena = %s
         """
         cur.execute(query, (correo, contrasena))
@@ -35,17 +41,21 @@ def sign_in():
             print("Error: Correo o contraseña incorrectos.")
             return None
         else:
-            rol, sucursal_id = resultado
-            current_branch = sucursal_id
-            print(f"Iniciaste sesión correctamente como {rol} en la sucursal {current_branch}.")
-            return rol
+            rol = resultado[0]
+            current_branch = get_sucursal_para_usuario(correo)
+            if current_branch:
+                print(f"Iniciaste sesión correctamente como {rol} en la sucursal {current_branch}.")
+                return rol
+            else:
+                print("Error: No se pudo obtener la sucursal para el usuario.")
+                return None
 
     except psycopg2.Error as e:
         print(f"Error al ejecutar la consulta: {e}")
         return None
 
 
-def log_in():
+def sign_up():
     nombre = input('Ingrese su nombre: ')
     correo = input('Ingrese su correo: ')
     contrasena = input('Ingrese su contraseña: ')
@@ -86,3 +96,10 @@ def log_in():
     except psycopg2.Error as e:
         print(f"Error al registrar el usuario: {e}")
         conn.rollback()
+
+
+def close_db_connection():
+    if cur:
+        cur.close()
+    if conn:
+        conn.close()

@@ -1,4 +1,4 @@
-import auth as a
+from Proyecto_2.auth import *
 from funciones_generales import desplegar_menu_por_rol
 
 continue1 = True
@@ -6,17 +6,19 @@ continue1 = True
 try:
     while continue1:
         print('Bienvenido al sistema gestor de Balbinos')
-        print('1. Iniciar sesión (Sign in)')
-        print('2. Registrarse (Log in)')
+        print('1. Iniciar sesión')
+        print('2. Registrar nuevo usuario')
         print('3. Salir')
         x = input('Ingrese su decisión: ')
 
         if x == '1':
-            rol = a.sign_in()
+            rol = log_in()
             if rol:
                 desplegar_menu_por_rol(rol)
+            else:
+                print("Error: No se pudo iniciar sesión.")
         elif x == '2':
-            a.log_in()
+            sign_up()
         elif x == '3':
             continue1 = False
         else:
@@ -26,4 +28,7 @@ except Exception as e:
     print(f"Ha ocurrido un error: {e}")
 
 finally:
-    print("Cerrando la conexión a la base de datos.")
+    print("Cerrando la conexión a la base de datos...")
+    close_db_connection()
+    print("Gracias por usar el sistema gestor de Balbinos.")
+

@@ -1,15 +1,28 @@
 import psycopg2
 
-from auth import get_sucursal_para_usuario
 from db_connection import get_connection
 
 conn = get_connection()
 cur = conn.cursor() if conn else None
 
 
-# Funcion para gestionar los insumos de la sucursal del administrador
+# Funcion para gestionar los insumos de una sucursal
+def gestion_de_insumos_administrador():
+    try:
+        # Obtener todas las sucursales disponibles
+        query_sucursales = '''
+            SELECT sucursal_id, nombre_sucursal FROM Sucursal;
+        '''
+        cur.execute(query_sucursales)
+        sucursales = cur.fetchall()
+        print("Seleccione la sucursal que desea modificar:")
+        for sucursal in sucursales:
+            print(f"{sucursal[0]}. {sucursal[1]}")
+        sucursal_id = int(input("Ingrese el ID de la sucursal: "))
+    except psycopg2.Error as e:
+        print(f"Error al obtener las sucursales: {e}")
+        return
 
-def gestion_de_insumos():
     while True:
         print('1. Registrar nuevos insumos para la sucursal')
         print('2. Visualizar todos insumos de la sucursal')
@@ -19,7 +32,6 @@ def gestion_de_insumos():
         d2 = input('Ingrese su decisión: ')
 
         if d2 == '1':
-            sucursal_id = get_sucursal_para_usuario()
             insumo_id = input('Ingrese el id del insumo: ')
             cantidad_nueva = int(input('Ingrese la cantidad nueva de insumos comprados: '))
 
@@ -41,7 +53,6 @@ def gestion_de_insumos():
                 conn.rollback()
 
         elif d2 == '2':
-            sucursal_id = get_sucursal_para_usuario()
             try:
                 query_select_insumos = '''
                     SELECT * FROM insumo WHERE sucursal_id = %s;
@@ -58,7 +69,6 @@ def gestion_de_insumos():
                 print(f"Error al obtener los insumos: {e}")
 
         elif d2 == '3':
-            sucursal_id = get_sucursal_para_usuario()
             try:
                 query_low_stock = '''
                     SELECT * FROM insumo WHERE sucursal_id = %s AND cantidad_disponible < 10;
@@ -144,12 +154,28 @@ def customer_history():
         print(f"Error al obtener el historial del cliente: {e}")
 
 
-# Funcion para ver un reporte de la sucursal del administrador
+# Funcion para generar reportes de todas las sucursales para el administrador
 def reporteria_administrador():
-    sucursal_id = get_sucursal_para_usuario()
-
     try:
-        # Top 10 de los platos más vendidos en la sucursal del administrador
+        # Mostrar todas las sucursales disponibles
+        query_sucursales = '''
+            SELECT sucursal_id, nombre_sucursal
+            FROM Sucursal;
+        '''
+        cur.execute(query_sucursales)
+        sucursales = cur.fetchall()
+
+        if not sucursales:
+            print("No hay sucursales disponibles.")
+            return
+
+        print("Sucursales disponibles:")
+        for sucursal in sucursales:
+            print(f"ID: {sucursal[0]}, Nombre: {sucursal[1]}")
+
+        sucursal_id = input("Ingrese el ID de la sucursal para ver el reporte: ")
+
+        # Top 10 de los platos más vendidos en la sucursal seleccionada
         query_top_platos = '''
             SELECT P.nombre, COUNT(PP.plato_id) AS cantidad_vendida
             FROM Pedido_Plato PP
@@ -162,11 +188,11 @@ def reporteria_administrador():
         '''
         cur.execute(query_top_platos, (sucursal_id,))
         top_platos = cur.fetchall()
-        print("Top 10 de los platos más vendidos en tu sucursal:")
+        print("Top 10 de los platos más vendidos:")
         for plato in top_platos:
             print(f"Plato: {plato[0]}, Cantidad Vendida: {plato[1]}")
 
-        # Top 10 de los clientes más frecuentes en la sucursal del administrador
+        # Top 10 de los clientes más frecuentes en la sucursal seleccionada
         query_top_clientes = '''
             SELECT C.nombre, COUNT(R.cliente_id) AS cantidad_visitas
             FROM Reserva R
@@ -178,11 +204,11 @@ def reporteria_administrador():
         '''
         cur.execute(query_top_clientes, (sucursal_id,))
         top_clientes = cur.fetchall()
-        print("\nTop 10 de los clientes más frecuentes en tu sucursal:")
+        print("\nTop 10 de los clientes más frecuentes:")
         for cliente in top_clientes:
             print(f"Cliente: {cliente[0]}, Cantidad de Visitas: {cliente[1]}")
 
-        # Top 5 de los clientes con mayores reservas y su preferencia de platos en la sucursal del administrador
+        # Top 5 de los clientes con mayores reservas y su preferencia de platos en la sucursal seleccionada
         query_top_reservas = '''
             SELECT C.nombre, COUNT(R.reserva_id) AS cantidad_reservas, C.plato_favorito
             FROM Reserva R
@@ -194,11 +220,11 @@ def reporteria_administrador():
         '''
         cur.execute(query_top_reservas, (sucursal_id,))
         top_reservas = cur.fetchall()
-        print("\nTop 5 de los clientes con mayores reservas y su preferencia de platos en tu sucursal:")
+        print("\nTop 5 de los clientes con mayores reservas y su preferencia de platos:")
         for reserva in top_reservas:
             print(f"Cliente: {reserva[0]}, Cantidad de Reservas: {reserva[1]}, Plato Favorito: {reserva[2]}")
 
-        # Reporte mensual de insumos a punto de terminarse o caducar en la sucursal del administrador
+        # Reporte mensual de insumos a punto de terminarse o caducar en la sucursal seleccionada
         query_insumos = '''
             SELECT nombre, cantidad_disponible, fecha_caducidad
             FROM Insumo
@@ -206,11 +232,11 @@ def reporteria_administrador():
         '''
         cur.execute(query_insumos, (sucursal_id,))
         insumos = cur.fetchall()
-        print("\nReporte mensual de insumos a punto de terminarse o caducar en tu sucursal:")
+        print("\nReporte mensual de insumos a punto de terminarse o caducar:")
         for insumo in insumos:
             print(f"Insumo: {insumo[0]}, Cantidad Disponible: {insumo[1]}, Fecha de Caducidad: {insumo[2]}")
 
-        # Comportamiento de la sucursal del administrador con mayor cantidad de reservas y ventas
+        # Comportamiento de la sucursal seleccionada con mayor cantidad de reservas y ventas
         query_sucursal = '''
             SELECT S.nombre_sucursal, COUNT(R.reserva_id) AS cantidad_reservas, SUM(P.total_pedido) AS total_ventas
             FROM Sucursal S
@@ -222,11 +248,51 @@ def reporteria_administrador():
         '''
         cur.execute(query_sucursal, (sucursal_id,))
         sucursal = cur.fetchone()
-        print("\nComportamiento de tu sucursal con mayor cantidad de reservas y ventas:")
+        print("\nComportamiento de la sucursal con mayor cantidad de reservas y ventas:")
         if sucursal:
             print(f"Sucursal: {sucursal[0]}, Cantidad de Reservas: {sucursal[1]}, Total de Ventas: {sucursal[2]}")
         else:
-            print("No se encontraron datos para tu sucursal.")
+            print("No se encontraron datos para la sucursal seleccionada.")
 
     except psycopg2.Error as e:
         print(f"Error al generar los reportes: {e}")
+
+
+# Funcion para ver un control de cambios en la sucursal que seleccione.
+def control_de_cambios_administrador():
+    try:
+        query_sucursales = '''
+            SELECT sucursal_id, nombre_sucursal FROM Sucursal;
+        '''
+        cur.execute(query_sucursales)
+        sucursales = cur.fetchall()
+        print("Seleccione la sucursal para la que desea ver los cambios:")
+        for sucursal in sucursales:
+            print(f"{sucursal[0]}. {sucursal[1]}")
+        sucursal_id = int(input("Ingrese el ID de la sucursal: "))
+    except psycopg2.Error as e:
+        print(f"Error al obtener las sucursales: {e}")
+        return
+
+    if sucursal_id:
+        try:
+            query_bitacora = '''
+                SELECT accion, fecha_accion, tabla_afectada
+                FROM Bitacora
+                WHERE tabla_afectada IN (
+                    'Sucursal', 'Cliente', 'Mesa', 'Reserva', 'Pedido', 'Plato', 'Insumo'
+                )
+                ORDER BY fecha_accion DESC;
+            '''
+            cur.execute(query_bitacora)
+            cambios = cur.fetchall()
+            if cambios:
+                print("Cambios recientes en la sucursal:")
+                for cambio in cambios:
+                    print(f"Acción: {cambio[0]}, Fecha: {cambio[1]}, Tabla Afectada: {cambio[2]}")
+            else:
+                print("No se encontraron cambios recientes para esta sucursal.")
+        except psycopg2.Error as e:
+            print(f"Error al obtener los cambios: {e}")
+    else:
+        print("No se seleccionó ninguna sucursal.")

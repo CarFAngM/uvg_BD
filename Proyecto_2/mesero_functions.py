@@ -1,6 +1,6 @@
 import psycopg2
 
-from auth import get_sucursal_para_usuario, current_branch
+from auth import current_branch
 from db_connection import get_connection
 
 conn = get_connection()
@@ -34,7 +34,7 @@ def agregar_cliente():
 def agregar_pedido():
     fecha = input('Ingrese la fecha del pedido (YYYY-MM-DD): ')
     cliente_id = input('Ingrese el id del cliente: ')
-    sucursal_id = get_sucursal_para_usuario()
+    sucursal_id = current_branch
     total_pedido = input('Ingrese el monto del pedido: ')
 
     try:
@@ -102,7 +102,7 @@ def gestionar_reservas():
         x2 = input('Ingrese su decisión: ')
 
         if x2 == '1':
-            sucursal_id = get_sucursal_para_usuario()
+            sucursal_id = current_branch
             try:
                 query_mesas_disponibles = """
                     SELECT mesa_id 
@@ -144,7 +144,7 @@ def gestionar_reservas():
         elif x2 == '2':
             try:
                 reserva_id = int(input('Ingrese el ID de la reserva: '))
-                sucursal_id = get_sucursal_para_usuario()
+                sucursal_id = current_branch
 
                 update_reserva_query = """
                     UPDATE reserva
@@ -177,7 +177,7 @@ def gestionar_mesas():
 
         if d1 == "1":
             try:
-                sucursal_id = get_sucursal_para_usuario()
+                sucursal_id = current_branch
                 ver_mesas_query = '''
                     SELECT mesa_id
                     FROM mesa
@@ -200,7 +200,7 @@ def gestionar_mesas():
 
         elif d1 == "2":
             try:
-                sucursal_id = get_sucursal_para_usuario()
+                sucursal_id = current_branch
                 mesa_id = int(input('Ingrese el ID de la mesa: '))
 
                 update_mesa_query = """
