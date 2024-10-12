@@ -1,6 +1,11 @@
 import psycopg2
 
-import funciones as f
+import connection as c
+import auth as a
+import admin_functions as af
+import gerente_functions as gf
+import mesero_functions as mf
+
 
 continue1 = True
 
@@ -13,9 +18,9 @@ try:
         x = input('Ingrese su decisión: ')
 
         if x == '1': 
-            f.sign_in()
+            a.sign_in()
         elif x == '2': 
-            f.log_in()
+            a.log_in()
         elif x == '3': 
             continue1 = False
         else: 
