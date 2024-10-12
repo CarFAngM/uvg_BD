@@ -1,4 +1,5 @@
 #  CONEXION BASES DE DATOS.
+from Proyecto_2.administrador_functions import *
 from Proyecto_2.gerente_functions import *
 from Proyecto_2.mesero_functions import *
 
@@ -23,12 +24,12 @@ def get_sucursal_para_usuario():
 
 def sign_in():
     correo = input("Escriba su correo: ")
-    contraseña = input("Escriba su contraseña: ")
+    contrasena = input("Escriba su contraseña: ")
 
     try:
         query = ("SELECT rol, sucursal_id FROM usuario JOIN sucursal_usuario ON usuario.usuario_id = "
                  "sucursal_usuario.usuario_id WHERE correo = %s AND contrasena = %s")
-        cur.execute(query, (correo, contraseña))
+        cur.execute(query, (correo, contrasena))
         resultado = cur.fetchone()
 
         if resultado is None:
@@ -47,103 +48,138 @@ def sign_in():
 
 def desplegar_menu_por_rol(rol):
     if rol == 'Mesero':
-        continuar3 = True
-        while continuar3:
+        continuar = True
+        while continuar:
             print('1. Agregar cliente')
             print('2. Agregar pedido')
             print('3. Gestionar reserva')
             print('4. Gestionar mesas')
             print('5. Visualizar clientes')
             print('6. Salir')
-            y = input('Ingrese qué desea realizar hoy: ')
+            opcion = input('Ingrese qué desea realizar hoy: ')
 
-            if y == '1':
+            if opcion == '1':
                 agregar_cliente()
-
-            elif y == '2':
+            elif opcion == '2':
                 agregar_pedido()
-
-            elif y == '3':
+            elif opcion == '3':
                 gestionar_reservas()
-
-            elif y == '4':
+            elif opcion == '4':
                 gestionar_mesas()
-
-            elif y == '5':
+            elif opcion == '5':
                 visualizar_clientes()
-
-            elif y == '6':
-                continuar3 = False
-
+            elif opcion == '6':
+                continuar = False
             else:
                 print('Ingrese una opción correcta.')
 
     elif rol == 'Administrador':
-        continuar5 = True
-        while continuar5:
-            print('1. Gestion de insumos basados en la sucursal')
-            print('2. Reporteria')
-            print('3. Control de cambios')
+        continuar = True
+        while continuar:
+            print('1. Gestión de insumos basados en la sucursal')
+            print('2. Reportería')
+            print('3. Control de cambios de la sucursal')
             print('4. Salir')
-            x2 = input('Ingrese qué desea realizar hoy: ')
+            opcion = input('Ingrese qué desea realizar hoy: ')
 
-            if x2 == '1':
-                agregar_cliente()
-
-            elif x2 == '2':
-                agregar_pedido()
-
-            elif x2 == '3':
-                gestionar_reservas()
-
-            elif x2 == '4':
-                gestionar_mesas()
-
-            elif x2 == '5':
-                visualizar_clientes()
-
-            elif x2 == '6':
-                continuar5 = False
-
+            if opcion == '1':
+                gestion_de_insumos()
+            elif opcion == '2':
+                reporteria_administrador()
+            elif opcion == '3':
+                control_de_cambios("Administrador")
+            elif opcion == '4':
+                continuar = False
             else:
                 print('Ingrese una opción correcta.')
 
     elif rol == 'Gerente':
-        continuar5 = True
-        while continuar5:
+        continuar = True
+        while continuar:
             print('1. Agregar cliente')
             print('2. Agregar pedido')
             print('3. Gestionar reserva')
             print('4. Gestionar mesas')
             print('5. Visualizar clientes')
-            print('6. Gestion de insumos de la sucursal a la que pertenece')
-            print('7. Control de cambios de la sucursal')
-            print('8. Salir')
-            z = input('Ingrese qué desea realizar hoy: ')
+            print('6. Gestión de insumos de la sucursal a la que pertenece')
+            print('7. Control de cambios de una sucursal')
+            print('8. Generar reporte de una sucursal')
+            print('9. Salir')
+            opcion = input('Ingrese qué desea realizar hoy: ')
 
-            if z == '1':
+            if opcion == '1':
                 agregar_cliente()
-
-            elif z == '2':
+            elif opcion == '2':
                 agregar_pedido()
-
-            elif z == '3':
+            elif opcion == '3':
                 gestionar_reservas()
-
-            elif z == '4':
+            elif opcion == '4':
                 gestionar_mesas()
-
-            elif z == '5':
+            elif opcion == '5':
                 visualizar_clientes()
-
-            elif z == '6':
+            elif opcion == '6':
                 gestion_de_insumos()
-
-            elif z == '7':
-                visualizar_clientes()
-
-            elif z == '8':
-                continuar5 = False
-
+            elif opcion == '7':
+                control_de_cambios("Gerente")
+            elif opcion == '8':
+                reporteria_gerente()
+            elif opcion == '9':
+                continuar = False
             else:
                 print('Ingrese una opción correcta.')
+
+
+# Funcion para ver un control de cambios. Funcionalidad cambia segun administrador o gerente.
+
+def control_de_cambios(rol):
+    sucursal_id = None
+
+    if rol == 'Administrador':
+        sucursal_id = get_sucursal_para_usuario()
+    elif rol == 'Gerente':
+        try:
+            query_sucursales = '''
+                SELECT sucursal_id, nombre_sucursal FROM Sucursal;
+            '''
+            cur.execute(query_sucursales)
+            sucursales = cur.fetchall()
+            print("Seleccione la sucursal para la que desea ver los cambios:")
+            for sucursal in sucursales:
+                print(f"{sucursal[0]}. {sucursal[1]}")
+            sucursal_id = int(input("Ingrese el ID de la sucursal: "))
+        except psycopg2.Error as e:
+            print(f"Error al obtener las sucursales: {e}")
+            return
+
+    if sucursal_id:
+        try:
+            query_bitacora = '''
+                SELECT accion, fecha_accion, tabla_afectada
+                FROM Bitacora
+                WHERE tabla_afectada IN (
+                    SELECT 'Sucursal' UNION ALL
+                    SELECT 'Cliente' UNION ALL
+                    SELECT 'Mesa' UNION ALL
+                    SELECT 'Reserva' UNION ALL
+                    SELECT 'Pedido' UNION ALL
+                    SELECT 'Plato' UNION ALL
+                    SELECT 'Insumo'
+                )
+                AND EXISTS (
+                    SELECT 1 FROM Sucursal_Usuario
+                    WHERE sucursal_id = %s AND usuario_id = %s
+                )
+                ORDER BY fecha_accion DESC;
+            '''
+            cur.execute(query_bitacora, (sucursal_id, get_sucursal_para_usuario()))
+            cambios = cur.fetchall()
+            if cambios:
+                print("Cambios recientes en la sucursal:")
+                for cambio in cambios:
+                    print(f"Acción: {cambio[0]}, Fecha: {cambio[1]}, Tabla Afectada: {cambio[2]}")
+            else:
+                print("No se encontraron cambios recientes para esta sucursal.")
+        except psycopg2.Error as e:
+            print(f"Error al obtener los cambios: {e}")
+    else:
+        print("No se seleccionó ninguna sucursal.")
