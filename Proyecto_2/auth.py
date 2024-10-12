@@ -1,10 +1,12 @@
-from db_connection import get_connection
 import psycopg2
+
+from db_connection import get_connection
 
 conn = get_connection()
 cur = conn.cursor() if conn else None
 
 current_branch = None
+
 
 def get_sucursal_para_usuario():
     global current_branch
@@ -13,27 +15,35 @@ def get_sucursal_para_usuario():
     else:
         return input('Ingrese el id de la sucursal (Administrador): ')
 
+
 def sign_in():
     global current_branch
     correo = input("Escriba su correo: ")
-    contraseña = input("Escriba su contraseña: ")
+    contrasena = input("Escriba su contraseña: ")
 
     try:
-        query = "SELECT rol, sucursal_id FROM usuario JOIN sucursal_usuario ON usuario.usuario_id = sucursal_usuario.usuario_id WHERE correo = %s AND contrasena = %s"
-        cur.execute(query, (correo, contraseña))
+        query = """
+            SELECT rol, sucursal_id
+            FROM usuario
+            JOIN sucursal_usuario ON usuario.usuario_id = sucursal_usuario.usuario_id
+            WHERE correo = %s AND contrasena = %s
+        """
+        cur.execute(query, (correo, contrasena))
         resultado = cur.fetchone()
 
         if resultado is None:
             print("Error: Correo o contraseña incorrectos.")
+            return None
         else:
             rol, sucursal_id = resultado
             current_branch = sucursal_id
             print(f"Iniciaste sesión correctamente como {rol} en la sucursal {current_branch}.")
             return rol
-    
+
     except psycopg2.Error as e:
         print(f"Error al ejecutar la consulta: {e}")
         return None
+
 
 def log_in():
     nombre = input('Ingrese su nombre: ')
@@ -69,10 +79,10 @@ def log_in():
                 VALUES (%s, %s);
             """
             cur.execute(insert_usuario_sucursal_query, (sucursal, usuario_id))
-        
+
         conn.commit()
         print("Registro exitoso. Has sido registrado correctamente.")
-    
+
     except psycopg2.Error as e:
         print(f"Error al registrar el usuario: {e}")
         conn.rollback()

@@ -1,9 +1,11 @@
+import psycopg2
+
 from auth import get_sucursal_para_usuario
 from db_connection import get_connection
-import psycopg2
 
 conn = get_connection()
 cur = conn.cursor() if conn else None
+
 
 def gestion_de_insumos():
     while True:
@@ -21,7 +23,7 @@ def gestion_de_insumos():
 
             try:
                 query_update_insumos = '''
-                    UPDATE insumo 
+                    UPDATE insumo
                     SET cantidad_disponible = cantidad_disponible + %s
                     WHERE insumo_id = %s and sucursal_id = %s;
                 '''
@@ -36,7 +38,39 @@ def gestion_de_insumos():
                 print(f"Error al actualizar los insumos: {e}")
                 conn.rollback()
 
-        # Resto de las opciones...
+        elif d2 == '2':
+            sucursal_id = get_sucursal_para_usuario()
+            try:
+                query_select_insumos = '''
+                    SELECT * FROM insumo WHERE sucursal_id = %s;
+                '''
+                cur.execute(query_select_insumos, (sucursal_id,))
+                insumos = cur.fetchall()
+                if insumos:
+                    for insumo in insumos:
+                        print(insumo)
+                else:
+                    print('No se encontraron insumos para esta sucursal.')
+
+            except psycopg2.Error as e:
+                print(f"Error al obtener los insumos: {e}")
+
+        elif d2 == '3':
+            sucursal_id = get_sucursal_para_usuario()
+            try:
+                query_low_stock = '''
+                    SELECT * FROM insumo WHERE sucursal_id = %s AND cantidad_disponible < 10;
+                '''
+                cur.execute(query_low_stock, (sucursal_id,))
+                insumos_bajo_stock = cur.fetchall()
+                if insumos_bajo_stock:
+                    for insumo in insumos_bajo_stock:
+                        print(insumo)
+                else:
+                    print('No hay insumos con stock bajo en esta sucursal.')
+
+            except psycopg2.Error as e:
+                print(f"Error al obtener los insumos con stock bajo: {e}")
 
         elif d2 == '4':
             break

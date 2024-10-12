@@ -2,7 +2,7 @@
 
 import psycopg2
 
-conn = None  
+conn = None
 
 try:
     conn = psycopg2.connect("host=localhost dbname=proyecto_2 user=postgres password=Liceojavier2")
@@ -10,7 +10,6 @@ try:
     cur = conn.cursor()
 except psycopg2.Error as e:
     print(f"No se pudo conectar a la base de datos: {e}")
-
 
 current_branch = None
 
@@ -23,9 +22,10 @@ def get_sucursal_para_usuario():
         return current_branch
     else:
         return input('Ingrese el id de la sucursal (Administrador): ')
-    
+
+
 def sign_in():
-    global current_branch 
+    global current_branch
     correo = input("Escriba su correo: ")
     contraseña = input("Escriba su contraseña: ")
 
@@ -37,79 +37,39 @@ def sign_in():
         if resultado is None:
             print("Error: Correo o contraseña incorrectos.")
         else:
-            rol, sucursal_id = resultado  
-            current_branch = sucursal_id  
+            rol, sucursal_id = resultado
+            current_branch = sucursal_id
             print(f"Iniciaste sesión correctamente como {rol} en la sucursal {current_branch}.")
             desplegar_menu_por_rol(rol)
-    
+
     except psycopg2.Error as e:
         print(f"Error al ejecutar la consulta: {e}")
 
-def log_in(): 
-    nombre = input('Ingrese su nombre: ')
-    correo = input('Ingrese su correo: ')
-    contrasena = input('Ingrese su contraseña: ')
-    rol = input('Ingrese su rol (Mesero, Administrador, Gerente): ')
 
-    while rol not in ['Mesero', 'Administrador', 'Gerente']:
-        print("Error: El rol ingresado no es válido. Debe ser 'Mesero', 'Administrador' o 'Gerente'.")
-        rol = input('Ingrese su rol (Mesero, Administrador, Gerente): ')
-
-    sucursal = None
-    if rol != 'Administrador':
-        sucursal = input('Ingrese su sucursal: ')
-
-    try:
-        insert_usuario_query = """
-            INSERT INTO Usuario (nombre, rol, correo, contrasena) 
-            VALUES (%s, %s, %s, %s) RETURNING usuario_id;
-        """
-        cur.execute(insert_usuario_query, (nombre, rol, correo, contrasena))
-        usuario_id = cur.fetchone()[0]
-
-        if rol == 'Administrador':
-            insert_usuario_sucursal_query = """
-                INSERT INTO Sucursal_Usuario (sucursal_id, usuario_id) 
-                VALUES (1, %s), (2, %s), (3, %s);
-            """
-            cur.execute(insert_usuario_sucursal_query, (usuario_id, usuario_id, usuario_id))
-        else:
-            insert_usuario_sucursal_query = """
-                INSERT INTO Sucursal_Usuario (sucursal_id, usuario_id) 
-                VALUES (%s, %s);
-            """
-            cur.execute(insert_usuario_sucursal_query, (sucursal, usuario_id))
-        
-        conn.commit()
-        print("Registro exitoso. Has sido registrado correctamente.")
-    
-    except psycopg2.Error as e:
-        print(f"Error al registrar el usuario: {e}")
-        conn.rollback()
-    
-# FUNCIONES DE GERENTE: 
+# FUNCIONES DE GERENTE:
 
 def visualizar_clientes():
     nombre = input('Ingrese el nombre del cliente: ')
     correo = input('Ingrese el correo del cliente: ')
 
     try:
-    
+
         query1 = "SELECT * FROM cliente WHERE nombre = %s AND correo = %s"
         cur.execute(query1, (nombre, correo))
-        
+
         resultado = cur.fetchone()
-        
+
         if resultado:
             print("Datos del cliente:", resultado)
         else:
             print("No se encontró ningún cliente con ese nombre y correo.")
-        
+
     except psycopg2.Error as e:
         print(f"Error al ejecutar la consulta: {e}")
 
-def gestion_de_insumos(): 
-    while True: 
+
+def gestion_de_insumos():
+    while True:
         print('1. Registrar nuevos insumos para la sucursal ')
         print('2. Visualizar todos insumos de la sucursal')
         print('3. Ver insumos cuyo stock esta bajo basados en sucursal')
@@ -117,20 +77,20 @@ def gestion_de_insumos():
 
         d2 = input('ingrese su decision: ')
 
-        if d2 == '1': 
+        if d2 == '1':
             sucursal_id = get_sucursal_para_usuario()
             insumo_id = input('Ingrese el id del insumo')
             cantidad_nueva = int(input('Ingrese la cantidad nueva de insumos comprados: '))
-            
+
             try:
                 query_update_insumos = '''
                     UPDATE insumo 
                     SET cantidad_disponible = cantidad_disponible + %s
                     WHERE insumo_id = %s and sucursal_id = %s;
                 '''
-                cur.execute(query_update_insumos, (cantidad_nueva, insumo_id,sucursal_id,))
-                conn.commit()  
-                if cur.rowcount > 0:  
+                cur.execute(query_update_insumos, (cantidad_nueva, insumo_id, sucursal_id,))
+                conn.commit()
+                if cur.rowcount > 0:
                     print('Cantidad de insumos actualizada correctamente.')
                 else:
                     print('No se encontró ningún insumo con ese ID.')
@@ -139,20 +99,21 @@ def gestion_de_insumos():
                 print(f"Error al actualizar los insumos: {e}")
                 conn.rollback()
 
-        elif d2 == '2': 
+        elif d2 == '2':
             sucursal_id = get_sucursal_para_usuario()
-            try: 
+            try:
                 query_visualizacion_insumos = '''
                     SELECT * 
                     FROM insumo 
                     WHERE sucursal_id = %s;    
                 '''
-                cur.execute(query_visualizacion_insumos,(sucursal_id,))
+                cur.execute(query_visualizacion_insumos, (sucursal_id,))
                 insumos = cur.fetchall()
 
-                if insumos:  
-                        for insumo in insumos: 
-                            print(f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, Stock_Bajo: {'Sí' if insumo[4] else 'No'}")
+                if insumos:
+                    for insumo in insumos:
+                        print(
+                            f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, Stock_Bajo: {'Sí' if insumo[4] else 'No'}")
                 else:
                     print('No se encontró ningún insumo con stock bajo en esa sucursal')
 
@@ -160,37 +121,38 @@ def gestion_de_insumos():
                 print(f"Error al visualizar los insumos: {e}")
                 conn.rollback()
 
-        elif d2 == '3': 
+        elif d2 == '3':
             sucursal_id = get_sucursal_para_usuario()
-            try: 
+            try:
                 query_visualizacion_insumos_stock_bajo = '''
                     SELECT * 
                     FROM insumo 
                     WHERE sucursal_id = %s and cantidad_disponible < 16;    
                 '''
-                cur.execute(query_visualizacion_insumos_stock_bajo,(sucursal_id,))
+                cur.execute(query_visualizacion_insumos_stock_bajo, (sucursal_id,))
                 insumos = cur.fetchall()
 
-                if insumos: 
-                    for insumo in insumos: 
-                        print(f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, Cantidad: {insumo[4]}")
-                else: 
+                if insumos:
+                    for insumo in insumos:
+                        print(
+                            f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, Cantidad: {insumo[4]}")
+                else:
                     print('No hay insumos con stock bajo en esta sucursal')
 
             except psycopg2.Error as e:
                 print(f"Error al visualizar los insumos: {e}")
                 conn.rollback()
-    
-        elif d2 == '4': 
+
+        elif d2 == '4':
             break
 
-        else: 
+        else:
             print('Ingrese una decision correcta.')
-         
+
 
 # FUNCIONES MESERO 
 
-def agregar_cliente(): 
+def agregar_cliente():
     nombre = input('Ingrese su nombre: ')
     correo = input('Ingrese su correo: ')
     telefono = input('Ingrese su teléfono: ')
@@ -204,15 +166,16 @@ def agregar_cliente():
         cur.execute(insert_cliente_query, (nombre, correo, telefono, plato_favorito))
         conn.commit()
         print("Cliente registrado con éxito.")
-    
+
     except psycopg2.Error as e:
         print(f"Error al registrar el cliente: {e}")
         conn.rollback()
 
+
 def agregar_pedido():
     fecha = input('Ingrese la fecha del pedido (YYYY-MM-DD): ')
     cliente_id = input('Ingrese el id del cliente: ')
-    sucursal_id = get_sucursal_para_usuario()  
+    sucursal_id = get_sucursal_para_usuario()
     total_pedido = input('Ingrese el monto del pedido: ')
 
     try:
@@ -231,10 +194,9 @@ def agregar_pedido():
                 print(f"Mesa ID: {mesa[0]}")
         else:
             print("No hay mesas disponibles en este momento en la sucursal.")
-            mesa_id = None  
+            mesa_id = None
 
         mesa_id = input('Ingrese la mesa de la sucursal que desea. Si no desea mesa, ingrese NULL: ')
-
 
         insert_pedido_query = """
         INSERT INTO pedido (fecha_pedido, total_pedido, cliente_id, sucursal_id, mesa_id) 
@@ -248,7 +210,7 @@ def agregar_pedido():
 
         while True:
             plato_id = input('Ingrese el ID del plato que desea agregar al pedido (o "0" para finalizar): ')
-            
+
             if plato_id == "0":
                 break
 
@@ -260,26 +222,27 @@ def agregar_pedido():
                 cur.execute(insert_pedido_plato_query, (pedido_id, plato_id))
                 conn.commit()
                 print(f"Plato con ID {plato_id} agregado al pedido {pedido_id} con éxito.")
-            
+
             except psycopg2.Error as e:
                 print(f"Error al agregar el plato {plato_id} al pedido: {e}")
                 conn.rollback()
-    
+
     except psycopg2.Error as e:
         print(f"Error al registrar el pedido: {e}")
         conn.rollback()
 
-def gestionar_reservas():
-    continuar4 = True 
 
-    while continuar4: 
+def gestionar_reservas():
+    continuar4 = True
+
+    while continuar4:
         print('1. Crear reserva')
         print('2. Finalizar reserva')
         print('3. Salir')
         x2 = input('Ingrese su decisión: ')
 
         if x2 == '1':
-            sucursal_id = get_sucursal_para_usuario() 
+            sucursal_id = get_sucursal_para_usuario()
             try:
                 query_mesas_disponibles = """
                     SELECT mesa_id 
@@ -295,11 +258,11 @@ def gestionar_reservas():
                         print(f"Mesa ID: {mesa[0]}")
                 else:
                     print("No hay mesas disponibles en este momento.")
-                    continue  
-            
+                    continue
+
             except psycopg2.Error as e:
                 print(f"Error al obtener mesas disponibles: {e}")
-                continue  
+                continue
 
             fecha_reserva = input('Ingrese la fecha en la que desea reservar: ')
             mesa_id = input('Ingrese el ID de la mesa que desea reservar: ')
@@ -313,16 +276,16 @@ def gestionar_reservas():
                 cur.execute(insert_reserva_query, (fecha_reserva, mesa_id, cliente_id, sucursal_id))
                 conn.commit()
                 print("Reserva creada exitosamente. ID de reserva:", cur.fetchone()[0])
-            
+
             except psycopg2.Error as e:
                 print(f"Error al registrar la reserva: {e}")
                 conn.rollback()
-            
-        elif x2 == '2': 
+
+        elif x2 == '2':
             try:
-                reserva_id = int(input('Ingrese el ID de la reserva: '))   
-                sucursal_id = get_sucursal_para_usuario()  
-                
+                reserva_id = int(input('Ingrese el ID de la reserva: '))
+                sucursal_id = get_sucursal_para_usuario()
+
                 update_reserva_query = """
                     UPDATE reserva
                     SET estado = 'FINALIZADA'
@@ -334,26 +297,26 @@ def gestionar_reservas():
 
             except ValueError:
                 print("Por favor, ingrese un número válido para el ID de reserva y sucursal.")
-            except psycopg2.Error as e: 
+            except psycopg2.Error as e:
                 print(f"Error al finalizar la reserva: {e}")
                 conn.rollback()
 
-        elif x2 == '3': 
+        elif x2 == '3':
             continuar4 = False
-        else: 
+        else:
             print('Ingrese números del 1 al 3.')
 
 
 def gestionar_mesas():
-    while True: 
+    while True:
         print('1. Ver mesas ocupadas de la sucursal')
         print('2. Desbloquear mesa')
         print('3. Salir')
         d1 = input('Ingrese su decisión: ')
-        
+
         if d1 == "1":
-            try: 
-                sucursal_id = get_sucursal_para_usuario() 
+            try:
+                sucursal_id = get_sucursal_para_usuario()
                 ver_mesas_query = '''
                     SELECT mesa_id
                     FROM mesa
@@ -368,24 +331,24 @@ def gestionar_mesas():
                         print(f"Mesa ID: {mesa[0]}")
                 else:
                     print("No hay mesas disponibles en este momento.")
-                    continue  
+                    continue
 
-            except psycopg2.Error as e: 
+            except psycopg2.Error as e:
                 print(f"Error al actualizar la mesa: {e}")
                 conn.rollback()
 
-        elif d1 == "2": 
-            try: 
+        elif d1 == "2":
+            try:
                 sucursal_id = get_sucursal_para_usuario()
                 mesa_id = int(input('Ingrese el ID de la mesa: '))
-                
+
                 update_mesa_query = """
                     UPDATE mesa
                     SET disponibilidad = TRUE
                     WHERE sucursal_id = %s AND mesa_id = %s;
                 """
                 cur.execute(update_mesa_query, (sucursal_id, mesa_id))
-                
+
                 if cur.rowcount > 0:
                     conn.commit()
                     print("Mesa marcada como disponible correctamente.")
@@ -395,19 +358,18 @@ def gestionar_mesas():
             except ValueError:
                 print("Por favor, ingrese un número válido para el ID de la sucursal y la mesa.")
 
-            except psycopg2.Error as e: 
+            except psycopg2.Error as e:
                 print(f"Error al actualizar la mesa: {e}")
-                conn.rollback()  
+                conn.rollback()
 
-        elif d1 == "3": 
+        elif d1 == "3":
             break
-        
-        else: 
+
+        else:
             print('Ingrese una decision correcta.')
 
 
-
-# FUNCIONES DE ADMINISTRADOR 
+# FUNCIONES DE ADMINISTRADOR
 
 
 def reporteria():
@@ -420,31 +382,31 @@ def customer_history():
 
 # FUNCION PARA DESPLEGAR EL MENU POR ROL. 
 
-def desplegar_menu_por_rol(rol): 
-    if rol == 'Mesero': 
+def desplegar_menu_por_rol(rol):
+    if rol == 'Mesero':
         continuar3 = True
-        while continuar3: 
+        while continuar3:
             print('1. Agregar cliente')
             print('2. Agregar pedido')
             print('3. Gestionar reserva')
             print('4. Gestionar mesas')
             print('5. Visualizar clientes')
             print('6. Salir')
-            y = input('Ingrese qué desea realizar hoy: ') 
+            y = input('Ingrese qué desea realizar hoy: ')
 
-            if y == '1': 
-                agregar_cliente() 
+            if y == '1':
+                agregar_cliente()
 
-            elif y == '2': 
+            elif y == '2':
                 agregar_pedido()
 
-            elif y == '3': 
+            elif y == '3':
                 gestionar_reservas()
 
-            elif y == '4': 
+            elif y == '4':
                 gestionar_mesas()
 
-            elif y == '5': 
+            elif y == '5':
                 visualizar_clientes()
 
             elif y == '6':
@@ -455,26 +417,26 @@ def desplegar_menu_por_rol(rol):
 
     elif rol == 'Administrador':
         continuar5 = True
-        while continuar5: 
+        while continuar5:
             print('1. Gestion de insumos basados en la sucursal')
             print('2. Reporteria')
             print('3. Control de cambios')
             print('4. Salir')
-            x2 = input('Ingrese qué desea realizar hoy: ') 
+            x2 = input('Ingrese qué desea realizar hoy: ')
 
-            if x2 == '1': 
-                agregar_cliente() 
+            if x2 == '1':
+                agregar_cliente()
 
-            elif x2 == '2': 
+            elif x2 == '2':
                 agregar_pedido()
 
-            elif x2 == '3': 
+            elif x2 == '3':
                 gestionar_reservas()
 
-            elif x2 == '4': 
+            elif x2 == '4':
                 gestionar_mesas()
 
-            elif x2 == '5': 
+            elif x2 == '5':
                 visualizar_clientes()
 
             elif x2 == '6':
@@ -485,7 +447,7 @@ def desplegar_menu_por_rol(rol):
 
     elif rol == 'Gerente':
         continuar5 = True
-        while continuar5: 
+        while continuar5:
             print('1. Agregar cliente')
             print('2. Agregar pedido')
             print('3. Gestionar reserva')
@@ -494,27 +456,27 @@ def desplegar_menu_por_rol(rol):
             print('6. Gestion de insumos de la sucursal a la que pertenece')
             print('7. Control de cambios de la sucursal')
             print('8. Salir')
-            z = input('Ingrese qué desea realizar hoy: ') 
+            z = input('Ingrese qué desea realizar hoy: ')
 
-            if z == '1': 
-                agregar_cliente() 
+            if z == '1':
+                agregar_cliente()
 
-            elif z == '2': 
+            elif z == '2':
                 agregar_pedido()
 
-            elif z == '3': 
+            elif z == '3':
                 gestionar_reservas()
 
-            elif z == '4': 
+            elif z == '4':
                 gestionar_mesas()
 
-            elif z == '5': 
+            elif z == '5':
                 visualizar_clientes()
 
-            elif z == '6': 
+            elif z == '6':
                 gestion_de_insumos()
 
-            elif z == '7': 
+            elif z == '7':
                 visualizar_clientes()
 
             elif z == '8':
@@ -522,6 +484,3 @@ def desplegar_menu_por_rol(rol):
 
             else:
                 print('Ingrese una opción correcta.')
-
-
-
