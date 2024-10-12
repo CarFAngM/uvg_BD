@@ -1,12 +1,13 @@
 import psycopg2
 
-from db_connection import get_connection
+from credenciales_base_datos import conectar_base_de_datos
 
-conn = get_connection()
+conn = conectar_base_de_datos()
 cur = conn.cursor() if conn else None
 
 
-# Funcion para gestionar los insumos de una sucursal
+# Funcion para gestionar los insumos de una sucursal que seleccione el administrador
+
 def gestion_de_insumos_administrador():
     try:
         # Obtener todas las sucursales disponibles
@@ -91,7 +92,8 @@ def gestion_de_insumos_administrador():
             print('Ingrese una decisión correcta.')
 
 
-# Funcion para ver el historial de un cliente
+# Funcion para ver el historial de un cliente que seleccione el administrador
+
 def customer_history():
     cliente_id = input('Ingrese el ID del cliente: ')
 
@@ -154,7 +156,8 @@ def customer_history():
         print(f"Error al obtener el historial del cliente: {e}")
 
 
-# Funcion para generar reportes de todas las sucursales para el administrador
+# Funcion para generar un reporte de la sucursal que seleccione el administrador
+
 def reporteria_administrador():
     try:
         # Mostrar todas las sucursales disponibles
@@ -236,7 +239,7 @@ def reporteria_administrador():
         for insumo in insumos:
             print(f"Insumo: {insumo[0]}, Cantidad Disponible: {insumo[1]}, Fecha de Caducidad: {insumo[2]}")
 
-        # Comportamiento de la sucursal seleccionada con mayor cantidad de reservas y ventas
+        # Comportamiento de la sucursal que tiene la mayor cantidad de reservas y ventas
         query_sucursal = '''
             SELECT S.nombre_sucursal, COUNT(R.reserva_id) AS cantidad_reservas, SUM(P.total_pedido) AS total_ventas
             FROM Sucursal S
@@ -259,6 +262,7 @@ def reporteria_administrador():
 
 
 # Funcion para ver un control de cambios en la sucursal que seleccione.
+
 def control_de_cambios_administrador():
     try:
         query_sucursales = '''

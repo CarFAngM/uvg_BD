@@ -1,8 +1,9 @@
-from Proyecto_2.auth import *
-from funciones_generales import desplegar_menu_por_rol
+from funciones_autenticacion import *
+from menu_principal import desplegar_menu_por_rol
 
 continue1 = True
 
+# Inicio del programa
 try:
     while continue1:
         print('Bienvenido al sistema gestor de Balbinos')
@@ -29,6 +30,5 @@ except Exception as e:
 
 finally:
     print("Cerrando la conexión a la base de datos...")
-    close_db_connection()
+    cerrar_conexion()
     print("Gracias por usar el sistema gestor de Balbinos.")
-

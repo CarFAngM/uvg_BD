@@ -1,10 +1,9 @@
-#  CONEXION BASES DE DATOS.
-from Proyecto_2.administrador_functions import *
-from Proyecto_2.gerente_functions import *
-from Proyecto_2.mesero_functions import *
+from Proyecto_2.funciones_administrador import *
+from Proyecto_2.funciones_gerente import *
+from Proyecto_2.funciones_mesero import *
 
 
-# Funcion para mostrar el menu segun el rol del usuario.
+# Funcion para mostrar un menu de opciones segun el rol del usuario.
 
 def desplegar_menu_por_rol(rol):
     if rol == 'Mesero':
