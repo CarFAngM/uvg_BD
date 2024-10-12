@@ -1,5 +1,5 @@
 import auth as a
-from funciones import desplegar_menu_por_rol
+from funciones_generales import desplegar_menu_por_rol
 
 continue1 = True
 
