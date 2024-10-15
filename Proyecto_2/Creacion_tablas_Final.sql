@@ -13,6 +13,8 @@ CREATE TABLE Bitacora (
     tabla_afectada VARCHAR(50)
 );
 
+
+
 ALTER TABLE Bitacora
 ALTER COLUMN accion SET DATA TYPE varchar(120);
 	
@@ -83,6 +85,11 @@ CREATE TABLE Insumo (
     alerta_stock_bajo BOOLEAN,
     sucursal_id INT REFERENCES Sucursal(sucursal_id)
 );
+
+ALTER TABLE insumo
+ADD CONSTRAINT chk_cantidad_disponible
+CHECK (cantidad_disponible BETWEEN 0 AND 100);
+
 
 CREATE TABLE Insumo_Plato (
     insumo_id INT REFERENCES Insumo(insumo_id),
