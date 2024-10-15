@@ -2,8 +2,9 @@ from credenciales_base_datos import *
 
 conn = conectar_base_de_datos()
 cur = conn.cursor() if conn else None
-global current_branch
 
+global current_branch
+current_branch = None
 
 # Funcion para obtener la sucursal de un usuario segun su correo
 
