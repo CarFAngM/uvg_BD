@@ -35,11 +35,12 @@ def gestion_de_insumos_administrador():
         if d2 == '1':
             insumo_id = input('Ingrese el id del insumo: ')
             cantidad_nueva = int(input('Ingrese la cantidad nueva de insumos comprados: '))
+            fecha_caducidad = input('ingrese fecha de caducidad:')
 
             try:
                 query_update_insumos = '''
                     UPDATE insumo
-                    SET cantidad_disponible = cantidad_disponible + %s
+                    SET cantidad_disponible = cantidad_disponible + %s and fecha_caducidad = %s
                     WHERE insumo_id = %s and sucursal_id = %s;
                 '''
                 cur.execute(query_update_insumos, (cantidad_nueva, insumo_id, sucursal_id))
