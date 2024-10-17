@@ -58,15 +58,15 @@ BEGIN
     SET disponibilidad = FALSE
     WHERE mesa.mesa_id = NEW.mesa_id;
 
-    RAISE NOTICE 'La mesa con el id está ocupada: mesa_id = %', NEW.mesa_id;
-
-
-    accion_personalizada := 'Mesa bloqueada por pedido: ' || NEW.pedido_id || ', Mesa ID: ' || NEW.mesa_id;
-
-
+	if NEW.mesa_id is not null then 
+	accion_personalizada := 'Mesa bloqueada por pedido: ' || NEW.pedido_id || ', Mesa ID: ' || NEW.mesa_id;
     INSERT INTO public.bitacora(accion, fecha_accion, tabla_afectada)
     VALUES (accion_personalizada, now(), 'mesa');
-
+	else 
+		accion_personalizada:= 'Se realizo el pedido' || NEW.pedido_id || 'a domicilio';
+		INSERT INTO public.bitacora(accion, fecha_accion, tabla_afectada)
+    	VALUES (accion_personalizada, now(), 'pedido');
+	end if; 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -159,8 +159,6 @@ FOR EACH ROW
 EXECUTE FUNCTION trigger_bitacora_insumos();
 
 
-
-
 CREATE OR REPLACE FUNCTION desbloquear_mesa_por_pedido()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -184,5 +182,3 @@ AFTER UPDATE OF disponibilidad ON mesa
 FOR EACH ROW
 WHEN (NEW.disponibilidad = TRUE)
 EXECUTE FUNCTION desbloquear_mesa_por_pedido();
-
-

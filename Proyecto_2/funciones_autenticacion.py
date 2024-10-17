@@ -6,8 +6,8 @@ cur = conn.cursor() if conn else None
 global current_branch
 current_branch = None
 
-# Funcion para obtener la sucursal de un usuario segun su correo
 
+# Funcion para obtener la sucursal de un usuario segun su correo
 def get_sucursal_para_usuario(correo):
     try:
         query = ("SELECT sucursal_id FROM Sucursal_Usuario WHERE usuario_id = "
@@ -24,9 +24,8 @@ def get_sucursal_para_usuario(correo):
         return None
 
 
-# Funcion para iniciar sesion y obtener el rol del usuario
-
 def log_in():
+    global current_branch
     correo = input("Escriba su correo: ")
     contrasena = input("Escriba su contraseña: ")
 
@@ -55,7 +54,6 @@ def log_in():
     except psycopg2.Error as e:
         print(f"Error al ejecutar la consulta: {e}")
         return None
-
 
 # Funcion para registrar un nuevo usuario
 

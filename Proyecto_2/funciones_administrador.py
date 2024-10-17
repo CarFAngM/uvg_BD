@@ -91,14 +91,10 @@ def gestion_de_insumos_administrador():
         else:
             print('Ingrese una decisión correcta.')
 
-
-# Funcion para ver el historial de un cliente que seleccione el administrador
-
 def customer_history():
     cliente_id = input('Ingrese el ID del cliente: ')
 
     try:
-        # Mostrar información del cliente
         query_cliente = '''
             SELECT nombre, correo, telefono, plato_favorito
             FROM Cliente

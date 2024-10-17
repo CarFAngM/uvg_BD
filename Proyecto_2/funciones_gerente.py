@@ -4,8 +4,6 @@ conn = conectar_base_de_datos()
 cur = conn.cursor() if conn else None
 
 
-# Funcion para visualizar un cliente en la base de datos
-
 def visualizar_clientes():
     nombre = input('Ingrese el nombre del cliente: ')
     correo = input('Ingrese el correo del cliente: ')
@@ -36,19 +34,21 @@ def gestion_de_insumos_gerente():
         print('4. Salir')
 
         d2 = input('Elige una opción: ')
-        sucursal_id = current_branch
 
         if d2 == '1':
             insumo_id = input('Ingrese el ID del insumo:')
             cantidad_nueva = int(input('Ingrese la cantidad nueva de insumos comprados: '))
+            fecha_caducidad = input('Ingrese fecha de caducidad del nuevo stock')
+            sucursal_id = input('Ingrese la sucursal: ')
+
 
             try:
                 query_update_insumos = '''
                     UPDATE insumo 
-                    SET cantidad_disponible = cantidad_disponible + %s
+                    SET cantidad_disponible = cantidad_disponible + %s and fecha_caducidad = %s 
                     WHERE insumo_id = %s and sucursal_id = %s;
                 '''
-                cur.execute(query_update_insumos, (cantidad_nueva, insumo_id, sucursal_id,))
+                cur.execute(query_update_insumos, (cantidad_nueva, fecha_caducidad, insumo_id, sucursal_id,))
                 conn.commit()
                 if cur.rowcount > 0:
                     print('Cantidad de insumos actualizada correctamente.')
@@ -60,6 +60,7 @@ def gestion_de_insumos_gerente():
                 conn.rollback()
 
         elif d2 == '2':
+            sucursal_id = input('Ingrese la sucursal: ')
             try:
                 query_visualizacion_insumos = '''
                     SELECT * 
@@ -73,14 +74,14 @@ def gestion_de_insumos_gerente():
                     for insumo in insumos:
                         print(f"ID: {insumo[0]}, Nombre: {insumo[1]}, C_D: {insumo[2]}, F_D_C: {insumo[3]}, "
                               f"Stock_Bajo: {'Sí' if insumo[4] else 'No'}")
-                else:
-                    print('No se encontró ningún insumo con stock bajo en esa sucursal.')
+               
 
             except psycopg2.Error as e:
                 print(f"Error al visualizar los insumos: {e}")
                 conn.rollback()
 
         elif d2 == '3':
+            sucursal_id = input('Ingrese la sucursal: ')
             try:
                 query_visualizacion_insumos_stock_bajo = '''
                     SELECT * 
@@ -107,11 +108,8 @@ def gestion_de_insumos_gerente():
         else:
             print('Ingrese una opción correcta.')
 
-
-# Funcion para ver un reporte de la sucursal del gerente
-
 def reporteria_gerente():
-    sucursal_id = current_branch
+    sucursal_id = input('Ingrese la sucursal: ')
 
     try:
         # Top 10 de los platos más vendidos en la sucursal del gerente
@@ -200,7 +198,7 @@ def reporteria_gerente():
 # Funcion para ver un control de cambios en la sucursal del gerente
 
 def control_de_cambios_gerente():
-    sucursal_id = current_branch
+    sucursal_id = input('Ingrese la sucursal: ')
     if sucursal_id:
         try:
             query_bitacora = '''

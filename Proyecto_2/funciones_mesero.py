@@ -31,7 +31,7 @@ def agregar_cliente():
 def agregar_pedido():
     fecha = input('Ingrese la fecha del pedido (YYYY-MM-DD): ')
     cliente_id = input('Ingrese el id del cliente: ')
-    sucursal_id = current_branch
+    sucursal_id = input('Ingrese la sucursal: ')
     total_pedido = input('Ingrese el monto del pedido: ')
 
     try:
@@ -51,6 +51,9 @@ def agregar_pedido():
             print("No hay mesas disponibles en este momento en la sucursal.")
 
         mesa_id = input('Ingrese la mesa de la sucursal que desea. Si no desea mesa, ingrese NULL: ')
+
+        # Convertir 'NULL' a None
+        mesa_id = None if mesa_id.upper() == "NULL" else mesa_id
 
         insert_pedido_query = """
         INSERT INTO pedido (fecha_pedido, total_pedido, cliente_id, sucursal_id, mesa_id)
@@ -85,7 +88,6 @@ def agregar_pedido():
         print(f"Error al registrar el pedido: {e}")
         conn.rollback()
 
-
 # Funcion para crear o finalizar reservas
 
 def gestionar_reservas():
@@ -98,7 +100,7 @@ def gestionar_reservas():
         x2 = input('Ingrese su decisión: ')
 
         if x2 == '1':
-            sucursal_id = current_branch
+            sucursal_id = input('Ingrese la sucursal: ')
             try:
                 query_mesas_disponibles = """
                     SELECT mesa_id 
@@ -174,7 +176,7 @@ def gestionar_mesas():
 
         if d1 == "1":
             try:
-                sucursal_id = current_branch
+                sucursal_id = input('Ingrese la sucursal: ')
                 ver_mesas_query = '''
                     SELECT mesa_id
                     FROM mesa
@@ -197,7 +199,7 @@ def gestionar_mesas():
 
         elif d1 == "2":
             try:
-                sucursal_id = current_branch
+                sucursal_id = input('Ingrese la sucursal: ')
                 mesa_id = int(input('Ingrese el ID de la mesa: '))
 
                 update_mesa_query = """

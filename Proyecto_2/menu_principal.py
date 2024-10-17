@@ -1,6 +1,6 @@
-from Proyecto_2.funciones_administrador import *
-from Proyecto_2.funciones_gerente import *
-from Proyecto_2.funciones_mesero import *
+from funciones_administrador import *
+from funciones_gerente import *
+from funciones_mesero import *
 
 
 # Funcion para mostrar un menu de opciones segun el rol del usuario.
